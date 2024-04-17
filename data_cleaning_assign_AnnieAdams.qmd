@@ -1,0 +1,181 @@
+---
+title: "data cleaning homework assignment"
+format: html
+editor: visual
+---
+
+### Load Necessary Packages
+
+```{r message = FALSE}
+library(tidyverse)
+```
+
+```{r}
+snowsurvey_csv <- read.csv(here::here("data", "processed", "snow_cover.csv"))
+```
+
+### Clean Water Cover column
+
+```{r}
+# check non numeric values 
+snowsurvey_csv %>%
+  count(Water_cover) %>%
+  filter(is.na(as.numeric(Water_cover)))
+
+
+#change n/a, unk, . , - , values to NA 
+snowsurvey_csv_clean <- snowsurvey_csv %>% 
+    mutate(Water_cover = ifelse(Water_cover==".", NA, Water_cover),
+          Water_cover = ifelse(Water_cover=="-", NA, Water_cover),
+          Water_cover = ifelse(Water_cover=="unk", NA, Water_cover),
+          Water_cover = ifelse(Water_cover=="n/a", NA, Water_cover))
+
+# check non numeric values again to ensure they were properly converted 
+snowsurvey_csv_clean %>%
+  count(Water_cover) %>%
+  filter(is.na(as.numeric(Water_cover)))
+
+
+
+# transform water cover column to correct data type 
+snowsurvey_csv_clean$Water_cover <- as.numeric(snowsurvey_csv_clean$Water_cover)
+
+# water column represents a percentage, so we should check that all values fall between 0 and 100
+snowsurvey_csv_clean %>% 
+  filter(Water_cover > 100 | Water_cover < 0)
+
+# We have one observation in our dataset where water cover is 353 - this cant be right
+# lets change this value to NA instead
+
+snowsurvey_csv_clean<- snowsurvey_csv_clean %>%
+  mutate(Water_cover = ifelse(Water_cover > 100, NA, Water_cover))
+```
+
+### Clean land cover column
+
+```{r}
+# check non numeric values 
+snowsurvey_csv %>%
+  count(Land_cover) %>%
+  filter(is.na(as.numeric(Land_cover)))
+
+
+#change n/a, unk, . , - , values to NA 
+snowsurvey_csv_clean <- snowsurvey_csv %>% 
+    mutate(Land_cover = ifelse(Land_cover==".", NA, Land_cover),
+          Land_cover = ifelse(Land_cover=="-", NA, Land_cover),
+          Land_cover = ifelse(Land_cover=="unk", NA, Land_cover),
+          Land_cover = ifelse(Land_cover=="n/a", NA, Land_cover))
+
+# check non numeric values again to ensure they were properly converted 
+snowsurvey_csv_clean %>%
+  count(Land_cover) %>%
+  filter(is.na(as.numeric(Land_cover)))
+
+
+
+# transform land cover column to correct data type 
+snowsurvey_csv_clean$Land_cover <- as.numeric(snowsurvey_csv_clean$Land_cover)
+
+# land column represents a percentage, so we should check that all values fall between 0 and 100
+snowsurvey_csv_clean %>% 
+  filter(Land_cover > 100 | Land_cover < 0)
+
+# We have two observations in our dataset where landcover is below 0 or above 100 - this cant be right
+# lets change these values to NA instead
+
+snowsurvey_csv_clean<- snowsurvey_csv_clean %>%
+  mutate(Land_cover = ifelse(Land_cover > 100 | Land_cover < 0 , NA, Land_cover))
+```
+
+### Clean total cover column
+
+```{r}
+# check non numeric values 
+snowsurvey_csv %>%
+  count(Total_cover) %>%
+  filter(is.na(as.numeric(Total_cover)))
+
+
+#change n/a, unk, . , - , values to NA 
+snowsurvey_csv_clean <- snowsurvey_csv %>% 
+    mutate(Total_cover = ifelse(Total_cover==".", NA, Total_cover),
+          Total_cover = ifelse(Total_cover=="-", NA, Total_cover),
+          Total_cover = ifelse(Total_cover=="unk", NA, Total_cover),
+          Total_cover = ifelse(Total_cover=="n/a", NA, Total_cover))
+
+# check non numeric values again to ensure they were properly converted 
+snowsurvey_csv_clean %>%
+  count(Total_cover) %>%
+  filter(is.na(as.numeric(Total_cover)))
+
+
+
+# transform all cover columns to correct data type 
+snowsurvey_csv_clean$Total_cover <- as.numeric(snowsurvey_csv_clean$Total_cover)
+snowsurvey_csv_clean$Land_cover <- as.numeric(snowsurvey_csv_clean$Land_cover)
+snowsurvey_csv_clean$Water_cover <- as.numeric(snowsurvey_csv_clean$Water_cover)
+snowsurvey_csv_clean$Snow_cover <- as.numeric(snowsurvey_csv_clean$Snow_cover)
+
+
+# total cover column should be equal to 100, lets see if there are any that arent equal to 100
+snowsurvey_csv_clean %>% 
+  filter(Total_cover != 100)
+
+# we have about 4400 observations where total cover is not = 100
+#these values are likely inaccurate, as total cover cannot be over 100 or under 100
+#lets make these values  and all other cover values for those observations NA isntead
+
+snowsurvey_csv_clean<- snowsurvey_csv_clean %>%
+  mutate(Total_cover = ifelse(Total_cover != 100, NA, Snow_cover + Land_cover + Water_cover),
+         Snow_cover =  ifelse(Total_cover != 100, NA, Snow_cover),
+         Water_cover = ifelse(Total_cover != 100, NA, Water_cover),
+         Land_cover =  ifelse(Total_cover != 100, NA, Land_cover)
+         )
+
+
+#check to make sure total cover = 100
+
+snowsurvey_csv_clean %>% 
+  filter(Total_cover != 100)
+```
+
+### 
+
+### Check to make sure land cover, water cover, snow cover, and total cover have the same numbers of NAs
+
+```{r}
+
+
+#check for NA values in the  total cover column
+snowsurvey_csv_clean %>%
+  count(Total_cover) %>%
+  filter(is.na(as.numeric(Total_cover))) 
+
+
+#check for NA values in the land cover column
+snowsurvey_csv_clean %>%
+  count(Land_cover) %>%
+  filter(is.na(as.numeric(Land_cover))) 
+
+#check for NA values in the land cover column
+snowsurvey_csv_clean %>%
+  count(Water_cover) %>%
+  filter(is.na(as.numeric(Water_cover))) 
+
+#check for NA values in the land cover column
+snowsurvey_csv_clean %>%
+  count(Snow_cover) %>%
+  filter(is.na(as.numeric(Snow_cover))) 
+
+
+```
+
+In cleaning the data, I noticed that there were a lot of observations where `Water_cover`+`Land_cover` + `Snow_cover` did not equal `Total_Cover`. I considered imputing an average for these columns, but since the NAs take place across different sites and dates, I figured an average could obscure trends in the data. So, I decided to make all rows where `Water_cover`+`Land_cover` + `Snow_cover` did not equal `Total_Cover` have NA values for all the cover related columns. A value not equal to 100 in the `Total_cover` column did not necessarily mean that there was not a numeric value present in the `Water_cover`,`Land_cover` , or `Snow_cover` columns, but I figured that if the `Total_Cover` column was incorrect, the values in the cover columns were also likely incorrect, and it would be best to make them NA values instead.
+
+### Create CSV from cleaned data
+
+```{r}
+write_csv(snowsurvey_csv_clean, file.path( "data/processed/", "snowsurvey_clean.csv"))
+
+```
