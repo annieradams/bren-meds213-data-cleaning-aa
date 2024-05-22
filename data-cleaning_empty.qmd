@@ -1,13 +1,22 @@
 ---
+Author: Annie Adams
 title: "Data Cleaning"
 format: html
 ---
+
+### Link to Github Repository
+
+https://github.com/annieradams/bren-meds213-data-cleaning-aa
+
 
 ```{r}
 #| message: false  
 
 # Libraries
 library(tidyverse)
+library(tidyr)
+library(readr)
+library(naniar)
 
 # file names
 datadir_raw <- "data/raw/"
@@ -33,6 +42,17 @@ snowsurvey_csv <- read_csv(file.path(datadir_raw, snowsurvey_file))
 glimpse(snowsurvey_csv)
 
 ```
+Check NAs
+```{r}
+snowsurvey_csv %>% 
+  miss_var_summary()
+```
+
+
+
+
+
+
 
 Ok, the types are not what we were expecting for the percentages of cover. Let's find out why:
 
